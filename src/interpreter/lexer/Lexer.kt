@@ -1,4 +1,4 @@
-package interpreter
+package interpreter.lexer
 
 /**
  * Created by ShiYK on 2017/5/29.
@@ -35,34 +35,34 @@ class Lexer(val text: String) {
 
     fun getNextToken(): Token {
         skipWhitespace()
-        val currentChar = currentChar() ?: return Token(Token.Type.EOF, "")
+        val currentChar = currentChar() ?: return Token(TokenType.EOF, "")
 
         if (currentChar.isDigit()) {
-            return Token(Token.Type.INTEGER, integer())
+            return Token(TokenType.INTEGER, integer())
         }
         if (currentChar == '+') {
             pos++
-            return Token(Token.Type.PLUS, '+')
+            return Token(TokenType.PLUS, '+')
         }
         if (currentChar == '-') {
             pos++
-            return Token(Token.Type.MINUS, '-')
+            return Token(TokenType.MINUS, '-')
         }
         if (currentChar == '*') {
             pos++
-            return Token(Token.Type.MUL, '*')
+            return Token(TokenType.MUL, '*')
         }
         if (currentChar == '/') {
             pos++
-            return Token(Token.Type.DIV, '/')
+            return Token(TokenType.DIV, '/')
         }
         if (currentChar == '(') {
             pos++
-            return Token(Token.Type.LPAREN, '(')
+            return Token(TokenType.LPAREN, '(')
         }
         if (currentChar == ')') {
             pos++
-            return Token(Token.Type.RPAREN, ')')
+            return Token(TokenType.RPAREN, ')')
         }
 
         throw Exception("Invalid Character $currentChar")
