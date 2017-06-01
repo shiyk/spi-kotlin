@@ -6,6 +6,7 @@ import interpreter.lexer.TokenType
 import interpreter.node.AST
 import interpreter.node.BinOp
 import interpreter.node.Num
+import interpreter.node.UnaryOp
 
 /**
  * Created by yk on 2017/5/27.
@@ -26,10 +27,18 @@ class Parser(val lexer: Lexer) {
     }
 
     /**
-     * factor: INTEGER | LPAREN expr RPAREN
+     * factor: (PLUS | MINUS) factor | INTEGER | LPAREN expr RPAREN
      */
     fun factor(): AST {
         val token = currentToken
+        if (token.type == TokenType.PLUS) {
+            eat(TokenType.PLUS)
+            return UnaryOp(token, factor())
+        }
+        if (token.type == TokenType.MINUS) {
+            eat(TokenType.MINUS)
+            return UnaryOp(token, factor())
+        }
         if (token.type == TokenType.INTEGER) {
             eat(TokenType.INTEGER)
             return Num(token)
@@ -64,7 +73,7 @@ class Parser(val lexer: Lexer) {
     /**
      * expr     : term ((PLUS | MINUS) term)*
      * term     : factor ((MUL | DIV) factor)*
-     * factor   : INTEGER | LPAREN expr RPAREN
+     * factor   : (PLUS | MINUS) factor | INTEGER | LPAREN expr RPAREN
      */
     fun expr(): AST {
         var node = term()

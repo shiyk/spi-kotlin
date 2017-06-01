@@ -3,6 +3,7 @@ package interpreter.interpreter
 import interpreter.lexer.TokenType
 import interpreter.node.BinOp
 import interpreter.node.Num
+import interpreter.node.UnaryOp
 import interpreter.parser.Parser
 
 /**
@@ -27,5 +28,11 @@ class Interpretor(val parser: Parser): NodeVisitor() {
 
     fun visitNum(node: Num): Int {
         return node.value
+    }
+
+    fun visitUnaryOp(node: UnaryOp) = when (node.op.type) {
+        TokenType.PLUS -> visit(node.expr)
+        TokenType.MINUS -> - visit(node.expr)
+        else -> throw Exception("Syntax Error: unexpected token $node")
     }
 }
