@@ -3,10 +3,7 @@ package interpreter.parser
 import interpreter.lexer.Lexer
 import interpreter.lexer.Token
 import interpreter.lexer.TokenType
-import interpreter.node.AST
-import interpreter.node.BinOp
-import interpreter.node.Num
-import interpreter.node.UnaryOp
+import interpreter.node.*
 
 /**
  * Created by yk on 2017/5/27.
@@ -27,47 +24,87 @@ class Parser(val lexer: Lexer) {
     }
 
     /**
-     * factor: (PLUS | MINUS) factor | INTEGER | LPAREN expr RPAREN
+     * program : compound_statement DOT
      */
-    fun factor(): AST {
-        val token = currentToken
-        if (token.type == TokenType.PLUS) {
-            eat(TokenType.PLUS)
-            return UnaryOp(token, factor())
-        }
-        if (token.type == TokenType.MINUS) {
-            eat(TokenType.MINUS)
-            return UnaryOp(token, factor())
-        }
-        if (token.type == TokenType.INTEGER) {
-            eat(TokenType.INTEGER)
-            return Num(token)
-        }
-
-        eat(TokenType.LPAREN)
-        val node = expr()
-        eat(TokenType.RPAREN)
+    fun program(): Compound {
+        val node = compoundStatement()
+        eat(TokenType.DOT)
         return node
     }
 
     /**
-     * term: factor ((MUL | DIV) factor)*
+     * compound_statement: BEGIN statement_list END
      */
-    fun term(): AST {
-        var node: AST = factor()
+    fun compoundStatement(): Compound {
+        eat(TokenType.BEGIN)
+        val nodes = statementList()
+        eat(TokenType.END)
 
-        while (currentToken.type == TokenType.MUL || currentToken.type == TokenType.DIV) {
-            val token = currentToken
-            if (token.type == TokenType.MUL) {
-                eat(TokenType.MUL)
-            } else if (token.type == TokenType.DIV) {
-                eat(TokenType.DIV)
-            }
+        val root = Compound()
+        root.children.addAll(nodes)
+        return root
+    }
 
-            node = BinOp(node, token, factor())
+    /**
+     * statement_list : statement | statement SEMI statement_list
+     */
+    fun statementList(): List<AST> {
+        val node = statement()
+        val results = mutableListOf(node)
+
+        while (currentToken.type == TokenType.SEMI) {
+            eat(TokenType.SEMI)
+            results.add(statement())
         }
 
+        if (currentToken.type == TokenType.ID) {
+            throw Exception("Unexpected token ${currentToken}")
+        }
+
+        return results
+    }
+
+    /**
+     * statement : compound_statement
+                    | assignment_statement
+                    | empty
+     */
+    fun statement(): AST {
+        if (currentToken.type == TokenType.BEGIN) {
+            return compoundStatement()
+        }
+        if (currentToken.type == TokenType.ID) {
+            return assignmentStatement()
+        }
+        return empty()
+    }
+
+    /**
+     * assignment_statement : variable ASSIGN expr
+     */
+    fun assignmentStatement(): Assign {
+        val left = variable()
+        val token = currentToken
+        eat(TokenType.ASSIGN)
+        val right = expr()
+        val node = Assign(left, token, right)
         return node
+    }
+
+    /**
+     * variable : ID
+     */
+    fun variable(): Var {
+        val node = Var(currentToken)
+        eat(TokenType.ID)
+        return node
+    }
+
+    /**
+     * An empty production
+     */
+    fun empty(): NoOp {
+        return NoOp()
     }
 
     /**
@@ -92,5 +129,55 @@ class Parser(val lexer: Lexer) {
         return node
     }
 
-    fun parse() = expr()
+    /**
+     * term: factor ((MUL | DIV) factor)*
+     */
+    fun term(): AST {
+        var node: AST = factor()
+
+        while (currentToken.type == TokenType.MUL || currentToken.type == TokenType.DIV) {
+            val token = currentToken
+            if (token.type == TokenType.MUL) {
+                eat(TokenType.MUL)
+            } else if (token.type == TokenType.DIV) {
+                eat(TokenType.DIV)
+            }
+
+            node = BinOp(node, token, factor())
+        }
+
+        return node
+    }
+
+    /**
+     * factor: PLUS factor
+     *          | MINUS factor
+     *          | INTEGER
+     *          | LPAREN expr RPAREN
+     *          | variable
+     */
+    fun factor(): AST {
+        val token = currentToken
+        if (token.type == TokenType.PLUS) {
+            eat(TokenType.PLUS)
+            return UnaryOp(token, factor())
+        }
+        if (token.type == TokenType.MINUS) {
+            eat(TokenType.MINUS)
+            return UnaryOp(token, factor())
+        }
+        if (token.type == TokenType.INTEGER) {
+            eat(TokenType.INTEGER)
+            return Num(token)
+        }
+        if (token.type == TokenType.LPAREN) {
+            eat(TokenType.LPAREN)
+            val node = expr()
+            eat(TokenType.RPAREN)
+            return node
+        }
+        return variable()
+    }
+
+    fun parse() = program()
 }

@@ -1,25 +1,44 @@
 package interpreter.lexer
 
 /**
- * Created by ShiYK on 2017/5/29.
+ * Created by yk on 2017/5/29.
  *
  * 分词器
  */
 class Lexer(val text: String) {
-    var pos: Int = 0
+    var pos = 0
 
-    fun currentChar(): Char? {
-        if (pos < text.length) {
-            return text[pos]
-        } else {
-            return null
-        }
+    val RESERVED_KEYWORDS = mapOf(
+            "BEGIN" to Token(TokenType.BEGIN, "BEGIN"),
+            "END" to Token(TokenType.END, "END")
+    )
+
+    fun currentChar() = if (pos < text.length) {
+        text[pos]
+    } else {
+        null
+    }
+
+    fun peek() = if (pos + 1 < text.length) {
+        text[pos + 1]
+    } else {
+         null
     }
 
     fun skipWhitespace() {
         while (currentChar()?.isWhitespace() ?: false) {
             pos++
         }
+    }
+
+    fun id(): Token {
+        var result = ""
+        while (currentChar()?.isLetterOrDigit() ?: false) {
+            result += currentChar()
+            pos++
+        }
+
+        return RESERVED_KEYWORDS.getOrDefault(result, Token(TokenType.ID, result))
     }
 
     fun integer(): Int {
@@ -37,6 +56,21 @@ class Lexer(val text: String) {
         skipWhitespace()
         val currentChar = currentChar() ?: return Token(TokenType.EOF, "")
 
+        if (currentChar.isLetter()) {
+            return id()
+        }
+        if (currentChar == ':' && peek() == '=') {
+            pos += 2
+            return Token(TokenType.ASSIGN, ":=")
+        }
+        if (currentChar == ';') {
+            pos++
+            return Token(TokenType.SEMI, ';')
+        }
+        if (currentChar == '.') {
+            pos++
+            return Token(TokenType.DOT, '.')
+        }
         if (currentChar.isDigit()) {
             return Token(TokenType.INTEGER, integer())
         }
@@ -67,6 +101,5 @@ class Lexer(val text: String) {
 
         throw Exception("Invalid Character $currentChar")
     }
-
 
 }

@@ -9,7 +9,7 @@ import kotlin.reflect.full.declaredFunctions
  * 访问者
  */
 open class NodeVisitor {
-    fun visit(node: AST): Int {
+    fun visit(node: AST): Any? {
         val methodName = "visit${node::class.simpleName}"
 
         val method = this::class
@@ -19,9 +19,17 @@ open class NodeVisitor {
                 }
 
         if (method != null) {
-            return method.call(this, node) as Int
-        } else {
-            throw Exception("No $methodName")
+            return method.call(this, node)
         }
+
+        throw Exception("No $methodName")
+    }
+
+    fun eval(node: AST): Int {
+        val r = visit(node)
+        if (r is Int) {
+            return r
+        }
+        throw Exception("Expecting an expression")
     }
 }

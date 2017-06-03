@@ -3,6 +3,7 @@ package interpreter
 import interpreter.interpreter.Interpretor
 import interpreter.lexer.Lexer
 import interpreter.parser.Parser
+import java.io.File
 
 /**
  * Created by yk on 2017/5/29.
@@ -10,19 +11,10 @@ import interpreter.parser.Parser
  * 测试
  */
 fun main(args: Array<String>) {
-    print("spi> ")
-    while (true) {
-        val line = readLine()
-        if (line.equals("exit")) {
-            return
-        }
-        if (line == null || line.isBlank()) {
-            continue
-        }
-        val lexer = Lexer(line)
-        val parser = Parser(lexer)
-        val interpreter = Interpretor(parser)
-        println("${interpreter.interpret()}")
-        print("spi> ")
-    }
+    val text = File(args[0]).readText()
+    val lexer = Lexer(text)
+    val parser = Parser(lexer)
+    val interpreter = Interpretor(parser)
+    interpreter.interpret()
+    println("${interpreter.GLOBAL_SCOPE}")
 }
